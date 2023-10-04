@@ -1,10 +1,14 @@
 # Ethgen
 
+<br>
+
 A toolkit for ethereum compatible development.
 
-Contains base primitives, utilities and helper macros to construct RPC calls,
-deserialize and decode RPC responses and sign transactions with a private key.
-Built with full `no_std` support.
+<br>
+
+Contains base primitives, utilities and helper macroses to construct RPC calls,
+to deserialize RPC responses and extract the data and to sign transactions with
+a private key, built with full `no_std` support.
 
 > Currently uses `forbid(unsafe_code)` directive, however this may change as
 > soon benchmarking is done and use of unsafe code would show significant gain
@@ -16,12 +20,12 @@ Built with full `no_std` support.
 ## Why not just use **ethers-rs** or **anvil**?
 
 The idea behind this project is to pack the minimum set of things required for
-an application to interact with ethereum compatible network in a full `no_std`
+an app to interact with ethereum compatible network with a completelly `no_std`
 library.
 
-Imagine all the cryptoghraphy happening in a wallet in a isolated wasm module.
-Could you imagine running a chain event listener on a smart watch. This is the
-capabilities this create is designed to open for the blockchain dev community.
+Imagine all the cryptoghraphy happening in a wallet in a isolated wasm module,
+or a chain event listener running on a smart watch. This and many more are the
+opportunities this create is designed to open for the blockchain dev community.
 
 <br>
 <br>
@@ -32,7 +36,7 @@ capabilities this create is designed to open for the blockchain dev community.
 > consider checking the [ethers-rs](https://docs.rs/ethers/latest/ethers/).
 
 Currently this project is at the embryo state and is under heavy development,
-the following features are planned to be included in first stable version:
+the following features are planned to be included in the first stable release:
 
 - [] Blockchain primitives;
 	- [] Address;
