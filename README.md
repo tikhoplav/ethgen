@@ -1,8 +1,10 @@
 # Ethgen
 
-A toolkit for ethereum compatible app development. Contains base primitives to
-and utilities to construct RPC calls, to deserialize and decode RPC responses
-and to sign transactions with a private key. Built with full `no_std` support.
+A toolkit for ethereum compatible development.
+
+Contains base primitives, utilities and helper macros to construct RPC calls,
+deserialize and decode RPC responses and sign transactions with a private key.
+Built with full `no_std` support.
 
 > Currently uses `forbid(unsafe_code)` directive, however this may change as
 > soon benchmarking is done and use of unsafe code would show significant gain
