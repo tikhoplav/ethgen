@@ -17,6 +17,13 @@ a private key, built with full `no_std` support.
 <br>
 <br>
 
+## Platform specific limitations
+
+- Builds only for 32-bit or 64-bit platforms (`crypto-bigint`); 
+
+<br>
+<br>
+
 ## Why not just use **ethers-rs** or **anvil**?
 
 The idea behind this project is to pack the minimum set of things required for
@@ -41,7 +48,7 @@ the following features are planned to be included in the first stable release:
 - [] Blockchain primitives;
 	- [] Address;
 	- [] Block;
-	- [] U256;
+	- [] uint256;
 - [x] JSON serializable / deserializable RPC calls;
 - [] Eip1559 Transaction (with RLP serialization);
 - [] Secp256k1 signature;
