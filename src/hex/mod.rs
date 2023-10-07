@@ -1,54 +1,33 @@
-//! Hex (base16) serialization / deserialization
-//!
-//! Provides two traits `Encode` and `Decode` that enables use of serde macros
-//! for automatic serialization / deserialization of a structure from / into a
-//! hex encoded string.
-//!
-//! ```
-//!	use ethgen::{hex, typenum};
-//! use serde::Serialize;
-//!
-//! struct Value([u8; 8]);
-//!
-//! impl AsRef<[u8]> for Value {
-//!		fn as_ref(&self) -> &[u8] {
-//!			self.0.as_ref()
-//! 	}
-//! }
-//!
-//! impl hex::Encode for Value {
-//!		// Should match the length of underlying data
-//!		type BytesLength = typenum::U8;
-//! }
-//!
-//! #[derive(Serialize)]
-//! struct Data {
-//!		#[serde(with = "hex")]
-//!		value: Value,
-//! }
-//!
-//!
-//!
-//! let data = Data {
-//!		value: Value(*b"\0\0ethers"),
-//! };
-//!
-//! let mut buf = [0u8; 256];
-//! // serde_json can be used if `std` is supported
-//! let n = serde_json_core::to_slice(&data, &mut buf).unwrap();
-//! let json = &buf[..n];
-//!
-//! let expected = br#"{"value":"0x0000657468657273"}"#;
-//!
-//!	assert_eq!(expected, json);
-//! ```
-use generic_array::ArrayLength;
+//! Hex encoding and serialization
 
-mod hex_full;
+mod encode;
 #[doc(inline)]
-pub use hex_full::{serialize};
+pub use encode::{
+	Encoder,
+	IterEncoder,
+	IterEncoderUpper,
+};
+
+ mod decode;
+ #[doc(inline)]
+ pub use decode::{Error, decode};
+ #[doc(hidden)]
+ pub use decode::const_decode;
+
+mod serde;
+#[doc(inline)]
+pub use self::serde::{serialize};
+
+mod macros;
 
 /// Hex serializable type
-pub trait Encode: AsRef<[u8]> {
-	type BytesLength: ArrayLength;
+pub trait Encode {
+	type IntoEncoder: Encoder;
+
+	fn into_encoder(self) -> Self::IntoEncoder;
 }
+
+// /// Hex deserializable type
+// trait Decode: Sized {
+// 	fn from_hex(src: impl AsRef<[u8]>) -> Result<Self, Error>;
+// }

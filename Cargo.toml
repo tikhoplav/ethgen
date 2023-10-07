@@ -11,13 +11,10 @@ edition = "2021"
 version = "1.5"
 default-features = false
 
-[dependencies.faster-hex]
-version = "0.8"
-default-features = false
-
 [dependencies.generic-array]
 version = "1.0"
 default-features = false
+features = ["const-default"]
 
 [dependencies.crypto-bigint]
 version = "0.5.3"
