@@ -49,8 +49,6 @@ impl<const L: usize> Add for EthUint<L> {
 
 #[allow(non_camel_case_types)]
 pub type uint256 = EthUint<4>;
-#[allow(non_camel_case_types)]
-pub type uint = uint256;
 
 impl fmt::Debug for uint256 {
 	fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
