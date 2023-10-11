@@ -25,5 +25,18 @@ version = "1.0"
 default-features = false
 features = ["derive"]
 
+[dependencies.faster-hex]
+version = "0.8.1"
+default-features = false
+optional = true
+
+
+
 [dev-dependencies]
 serde-json-core = { version = "0.5" }
+
+
+
+[features]
+faster-hex = ["dep:faster-hex"]
+

@@ -1,18 +1,17 @@
 /// Decode hex string in const time
 ///
-/// Can be used to decode a hex string to bytes during compilation time as well
-/// as during the runtime.
+/// Can be used to decode a hex string to bytes during compilation.
 ///
 /// ### Panics
 ///
-/// Panics target constant array length does not match the half of the source
-/// string length exactly (which also means, that source string length must be
-/// even). Also panics if source string has non hexadecimal characters.
+/// - if hex string has odd number of characters;
+/// - if resulting array doesn't have enough capacity;
+/// - if invalid hex character presented in the string;
 ///
 /// ```
-///	use ethgen::unhex;
+/// use ethgen::unhex;
 ///
-/// 
+///
 /// const FOO: [u8; 3] = unhex!("666f6f");
 /// assert_eq!(b"foo", &FOO);
 ///
@@ -21,21 +20,21 @@
 /// ```
 #[macro_export]
 macro_rules! unhex {
-	($s:literal) => {{
-		const SRC: &'static [u8] = $s.as_bytes();
-		$crate::hex::const_decode(SRC)
-	}}
+    ($s:literal) => {{
+        const SRC: &'static [u8] = $s.as_bytes();
+        $crate::hex::const_decode(SRC)
+    }};
 }
 
 #[cfg(test)]
 mod test {
-	const FOO: [u8; 4] = unhex!("face2bad");
+    const FOO: [u8; 4] = unhex!("face2bad");
 
-	#[test]
-	fn test_unhex() {
-		assert_eq!([0xfau8, 0xce, 0x2b, 0xad], FOO);
+    #[test]
+    fn test_unhex() {
+        assert_eq!([0xfau8, 0xce, 0x2b, 0xad], FOO);
 
-		let bar = unhex!("def4dead");
-		assert_eq!([0xdeu8, 0xf4, 0xde, 0xad], bar);
-	}
+        let bar = unhex!("def4dead");
+        assert_eq!([0xdeu8, 0xf4, 0xde, 0xad], bar);
+    }
 }

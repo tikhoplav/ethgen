@@ -1,97 +1,127 @@
+use super::Error;
+#[cfg(feature = "faster-hex")]
+use faster_hex;
+
 #[inline(always)]
+#[cfg(not(feature = "faster-hex"))]
 fn nybl_lower(b: u8) -> u8 {
-	let b = b as i16;
-	(b + 0x30 + (((0x9 - b) >> 8) & (0x61i16 - 0x3a))) as u8
+    let b = b as i16;
+    (b + 0x30 + (((0x9 - b) >> 8) & (0x61i16 - 0x3a))) as u8
 }
 
 #[inline(always)]
+#[cfg(not(feature = "faster-hex"))]
 fn nybl_upper(b: u8) -> u8 {
-	let b = b as i16;
-	(b + 0x30 + (((0x9 - b) >> 8) & (0x41i16 - 0x3a))) as u8
+    let b = b as i16;
+    (b + 0x30 + (((0x9 - b) >> 8) & (0x41i16 - 0x3a))) as u8
 }
 
-/// An iterator that yields hex encoded bytes
-pub trait Encoder: Iterator<Item = u8> + ExactSizeIterator {}
+macro_rules! impl_encode {
+    (	$(#[$meta:meta])*
+	$name:ident => $fn:ident, $fallback:ident
+    ) => {
+	$(#[$meta])*
+	pub fn $name<S>(src: S, dst: &mut [u8]) -> Result<usize, Error>
+	where
+	    S: AsRef<[u8]>,
+	{
+	    let src = src.as_ref();
 
-macro_rules! impl_iter_encoder {
-	(	$(#[$meta:meta])*
-		$name:ident => $fn:ident
-	) => {
-		$(#[$meta])*
-		pub struct $name<'a, I>
-		where
-			I: Iterator<Item = &'a u8>
-		{
-			inner: I,
-			last: Option<&'a u8>,
+	    let pad = match dst.len().checked_sub(src.len() << 1) {
+		Some(pad) => pad,
+		None => {
+		    return Err(Error::BufferOverflow);
 		}
+	    };
 
-		impl<'a, I> $name<'a, I>
-		where
-			I: Iterator<Item = &'a u8>
-		{
-			pub fn new(inner: I) -> Self {
-				Self { inner, last: None }
-			}
+	    #[cfg(not(feature = "faster-hex"))]
+	    {
+		for (i, byte) in src.iter().enumerate() {
+		    dst[pad + (i << 1)] = $fallback(byte >> 4);
+		    dst[pad + (i << 1) + 1] = $fallback(byte & 0x0f);
 		}
+	    }
 
-		impl<'a, I> Iterator for $name<'a, I>
-		where
-			I: Iterator<Item = &'a u8>
-		{
-			type Item = u8;
+	    #[cfg(feature = "faster-hex")]
 
-			fn next(&mut self) -> Option<Self::Item> {
-				match self.last {
-					Some(byte) => {
-						self.last = None;
-						Some($fn(byte & 0x0f))
-					},
-					None => {
-						match self.inner.next() {
-							Some(byte) => {
-								self.last = Some(byte);
-								Some($fn(byte >> 4))
-							},
-							None => None,
-						}
-					}
-				}
-			}
+	    unsafe {
+		faster_hex::$fn(src, &mut dst[pad..]).unwrap_unchecked();
+	    }
 
-			fn size_hint(&self) -> (usize, Option<usize>) {
-				let (mut lower, mut upper) = self.inner.size_hint();
-				lower = lower << 1;
-				upper = match upper {
-					Some(upper) => Some(upper << 1),
-					None => None,
-				};
-				(lower, upper)
-			}
-		}
-
-		impl<'a, I> ExactSizeIterator for $name<'a, I>
-		where
-			I: Iterator<Item = &'a u8>
-		{
-			//
-		}
-
-		impl<'a, I> Encoder for $name<'a, I>
-		where
-			I: Iterator<Item = &'a u8>
-		{
-			//
-		}
+	    Ok(pad)
 	}
+    }
 }
 
-impl_iter_encoder! {
-	/// Encode to lower hex string
-	IterEncoder => nybl_lower
+impl_encode! {
+    /// Encode to hex
+    ///
+    /// Writes encoded hex bytes to the end of the provided buffer returning
+    /// the number of leading zeroes.
+    ///
+    /// ```
+    /// use ethgen::hex;
+    ///
+    ///
+    ///
+    /// let msg = b"ethgen rules";
+    ///
+    /// let mut buf = [0u8; 32];
+    /// let pad = hex::encode(msg, &mut buf).unwrap();
+    ///
+    /// assert_eq!(
+    ///	    b"65746867656e2072756c6573",
+    ///	    &buf[pad..]
+    /// );
+    /// ```
+    #[inline]
+    encode => hex_encode, nybl_lower
 }
 
-impl_iter_encoder! {
-	/// Encode to upper hex string
-	IterEncoderUpper => nybl_upper
+impl_encode! {
+    /// Encode to upper hex
+    ///
+    /// Writes encoded upper hex bytes to the end of the buffer returning the
+    /// number of leading zeroes.
+    ///
+    /// ```
+    /// use ethgen::hex;
+    ///
+    ///
+    /// let msg = "any some";
+    ///
+    /// let mut buf = [0u8; 32];
+    /// let pad = hex::encode_upper(msg, &mut buf).unwrap();
+    ///
+    /// assert_eq!(
+    ///	    b"616E7920736F6D65",
+    ///	    &buf[pad..]
+    /// );
+    /// ```
+    encode_upper => hex_encode_upper, nybl_upper
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn test_encode_lower() {
+        let msg = b"ethgen rules";
+
+        let mut buf = [0u8; 32];
+        let pad = encode(msg, &mut buf).unwrap();
+
+        assert_eq!(b"65746867656e2072756c6573", &buf[pad..]);
+    }
+
+    #[test]
+    fn test_encode_upper() {
+        let msg = b"any some";
+
+        let mut buf = [0u8; 32];
+        let pad = encode_upper(msg, &mut buf).unwrap();
+
+        assert_eq!(b"616E7920736F6D65", &buf[pad..]);
+    }
 }
