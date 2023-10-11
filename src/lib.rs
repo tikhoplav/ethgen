@@ -9,4 +9,4 @@ pub mod rpc;
 
 mod uint;
 #[doc(inline)]
-pub use uint::{uint256};
+pub use uint::uint256;

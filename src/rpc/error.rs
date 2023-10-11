@@ -1,11 +1,6 @@
-use core::{fmt, str};
 use bytes::Bytes;
-use serde::{
-	Serialize,
-	Serializer,
-	Deserialize,
-	Deserializer,
-};
+use core::{fmt, str};
+use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum Code {
@@ -77,9 +72,9 @@ impl Message {
 }
 
 impl fmt::Debug for Message {
-	fn fmt(&self, f: &mut fmt::Formatter<'_>) -> Result<(), fmt::Error> {
-		self.0.fmt(f)
-	}
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> Result<(), fmt::Error> {
+        self.0.fmt(f)
+    }
 }
 
 impl Serialize for Message {
@@ -87,7 +82,7 @@ impl Serialize for Message {
     where
         S: Serializer,
     {
-    	let s = str::from_utf8(&self.0).unwrap();
+        let s = str::from_utf8(&self.0).unwrap();
         serializer.serialize_str(s)
     }
 }
@@ -107,48 +102,51 @@ impl<'a> Deserialize<'a> for Message {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct Error {
-	pub code: Code,
-	pub message: Message,
+    pub code: Code,
+    pub message: Message,
 }
 
 impl Error {
     pub fn new(code: Code, bytes: Bytes) -> Self {
-        Self { code, message: Message::new(bytes) }
+        Self {
+            code,
+            message: Message::new(bytes),
+        }
     }
 }
 
 #[cfg(test)]
 mod test {
-	use super::*;
-	use bytes::{BytesMut, BufMut};
-	use serde_json_core;
+    use super::*;
+    use bytes::{BufMut, BytesMut};
+    use serde_json_core;
 
-	#[test]
-	fn message_into_json() {
-		let mut b = BytesMut::with_capacity(64);
-		b.put(&b"Hello, this is a little RPC error"[..]);
-		let msg = Message(b.into());
+    #[test]
+    fn message_into_json() {
+        let mut b = BytesMut::with_capacity(64);
+        b.put(&b"Hello, this is a little RPC error"[..]);
+        let msg = Message(b.into());
 
-		let mut buf = [0u8; 64];
-		let n = serde_json_core::to_slice(&msg, &mut buf).unwrap();
-		let result = core::str::from_utf8(&buf[..n]).unwrap();
-		
-		let expected = r#""Hello, this is a little RPC error""#;
+        let mut buf = [0u8; 64];
+        let n = serde_json_core::to_slice(&msg, &mut buf).unwrap();
+        let result = core::str::from_utf8(&buf[..n]).unwrap();
 
-		assert_eq!(expected, result);
-	}
+        let expected = r#""Hello, this is a little RPC error""#;
 
-	#[test]
-	fn message_from_json() {
-		let json = r#""This is the PRC error message as a custom json string.""#;
-		let (result, _) = serde_json_core::from_str::<Message>(json).unwrap();
+        assert_eq!(expected, result);
+    }
 
-		let expected = Message(
-			Bytes::from("This is the PRC error message as a custom json string.")
-		);
+    #[test]
+    fn message_from_json() {
+        let json = r#""This is the PRC error message as a custom json string.""#;
+        let (result, _) = serde_json_core::from_str::<Message>(json).unwrap();
 
-		assert_eq!(expected, result);
-	}
+        let expected = Message(Bytes::from(
+            "This is the PRC error message as a custom json string.",
+        ));
+
+        assert_eq!(expected, result);
+    }
 
     #[test]
     fn error_into_json() {
@@ -173,7 +171,7 @@ mod test {
 
         let expected = Error {
             code: Code::TransactionRejected,
-            message: Message(Bytes::from("Call reverted: assertion failed"))
+            message: Message(Bytes::from("Call reverted: assertion failed")),
         };
 
         assert_eq!(expected, result);
