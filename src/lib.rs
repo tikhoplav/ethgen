@@ -4,6 +4,10 @@
 // pub use generic_array;
 // pub use generic_array::typenum;
 
+mod encode;
+#[doc(inline)]
+pub use encode::Encode;
+
 pub mod hex;
 pub mod rpc;
 

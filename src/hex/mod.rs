@@ -14,23 +14,11 @@ pub use decode::const_decode;
 #[doc(inline)]
 pub use decode::decode;
 
-// mod serde;
-// #[doc(inline)]
-// pub use self::serde::{serialize};
-
 mod macros;
 
-// /// Hex serializable type
-// pub trait Encode {
-// 	type IntoEncoder: Encoder;
-
-// 	fn into_encoder(self) -> Self::IntoEncoder;
-// }
-
-// // /// Hex deserializable type
-// // trait Decode: Sized {
-// // 	fn from_hex(src: impl AsRef<[u8]>) -> Result<Self, Error>;
-// // }
+mod serde;
+#[doc(inline)]
+pub use self::serde::serialize;
 
 //
 // #[cfg(test)]

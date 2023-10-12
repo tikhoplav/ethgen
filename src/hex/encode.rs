@@ -21,12 +21,8 @@ macro_rules! impl_encode {
 	$name:ident => $fn:ident, $fallback:ident
     ) => {
 	$(#[$meta])*
-	pub fn $name<S>(src: S, dst: &mut [u8]) -> Result<usize, Error>
-	where
-	    S: AsRef<[u8]>,
+	pub fn $name(src: &[u8], dst: &mut [u8]) -> Result<usize, Error>
 	{
-	    let src = src.as_ref();
-
 	    let pad = match dst.len().checked_sub(src.len() << 1) {
 		Some(pad) => pad,
 		None => {
@@ -43,9 +39,11 @@ macro_rules! impl_encode {
 	    }
 
 	    #[cfg(feature = "faster-hex")]
-
-	    unsafe {
-		faster_hex::$fn(src, &mut dst[pad..]).unwrap_unchecked();
+	    {
+		// Safe as all necessary length checks are already done.
+		unsafe {
+		    faster_hex::$fn(src, &mut dst[pad..]).unwrap_unchecked();
+		}
 	    }
 
 	    Ok(pad)
@@ -88,7 +86,7 @@ impl_encode! {
     /// use ethgen::hex;
     ///
     ///
-    /// let msg = "any some";
+    /// let msg = b"any some";
     ///
     /// let mut buf = [0u8; 32];
     /// let pad = hex::encode_upper(msg, &mut buf).unwrap();
