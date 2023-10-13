@@ -16,37 +16,60 @@ fn nybl_upper(b: u8) -> u8 {
     (b + 0x30 + (((0x9 - b) >> 8) & (0x41i16 - 0x3a))) as u8
 }
 
-macro_rules! impl_encode {
+macro_rules! impl_encode_unchecked {
     (	$(#[$meta:meta])*
 	$name:ident => $fn:ident, $fallback:ident
     ) => {
 	$(#[$meta])*
-	pub fn $name(src: &[u8], dst: &mut [u8]) -> Result<usize, Error>
-	{
-	    let pad = match dst.len().checked_sub(src.len() << 1) {
-		Some(pad) => pad,
-		None => {
-		    return Err(Error::BufferOverflow);
-		}
-	    };
+	pub fn $name(src: &[u8], dst: &mut [u8]) -> usize {
+	    // Panic if underflow
+	    let pad = dst.len() - (src.len() << 1);
 
 	    #[cfg(not(feature = "faster-hex"))]
 	    {
+		// Panic if index >= length
 		for (i, byte) in src.iter().enumerate() {
-		    dst[pad + (i << 1)] = $fallback(byte >> 4);
+		    dst[pad + (i << 1)]     = $fallback(byte >>   4);
 		    dst[pad + (i << 1) + 1] = $fallback(byte & 0x0f);
 		}
 	    }
 
 	    #[cfg(feature = "faster-hex")]
 	    {
-		// Safe as all necessary length checks are already done.
-		unsafe {
-		    faster_hex::$fn(src, &mut dst[pad..]).unwrap_unchecked();
-		}
+		// Panic if dst length < src length * 2
+		faster_hex::$fn(src, &mut dst[pad..]).unwrap();
 	    }
 
-	    Ok(pad)
+	    pad
+	}
+    }
+}
+
+impl_encode_unchecked! {
+    /// Encode to hex
+    encode_unchecked => hex_encode, nybl_lower
+}
+
+impl_encode_unchecked! {
+    /// Encode to uppercase hex
+    encode_upper_unchecked => hex_encode_upper, nybl_upper
+}
+
+macro_rules! impl_encode {
+    (	$(#[$meta:meta])*
+	$name:ident => $fn:ident
+    ) => {
+	$(#[$meta])*
+	pub fn $name(src: &[u8], dst: &mut [u8]) -> Result<usize, Error> {
+	    if src.len() % 2 != 0 {
+		return Err(Error::InvalidLength);
+	    }
+
+	    if src.len() << 1 > dst.len() {
+		return Err(Error::BufferOverflow);
+	    }
+
+	    Ok($fn(src, dst))
 	}
     }
 }
@@ -73,7 +96,7 @@ impl_encode! {
     /// );
     /// ```
     #[inline]
-    encode => hex_encode, nybl_lower
+    encode => encode_unchecked
 }
 
 impl_encode! {
@@ -96,7 +119,7 @@ impl_encode! {
     ///	    &buf[pad..]
     /// );
     /// ```
-    encode_upper => hex_encode_upper, nybl_upper
+    encode_upper => encode_upper_unchecked
 }
 
 #[cfg(test)]

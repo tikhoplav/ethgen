@@ -7,6 +7,8 @@ pub use error::Error;
 mod encode;
 #[doc(inline)]
 pub use encode::{encode, encode_upper};
+#[doc(hidden)]
+pub use encode::{encode_unchecked, encode_upper_unchecked};
 
 mod decode;
 #[doc(hidden)]
