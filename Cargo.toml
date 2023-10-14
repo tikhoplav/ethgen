@@ -1,0 +1,32 @@
+[package]
+name = "ethgen"
+version = "0.0.1"
+description = "A toolkit to build ethereum compatible apps"
+authors = ["Vitaly Tikhoplav <tikhoplavspb@gmail.com>"]
+categories = ["cryptography", "encoding", "data structures", "no-std"]
+keywords = ["ethers", "crypto"]
+edition = "2021"
+
+[dependencies.generic-array]
+version = "1.0"
+default-features = false
+
+[dependencies.serde]
+version = "1.0"
+default-features = false
+features = ["derive"]
+
+
+
+[features]
+faster-hex = ["dep:faster-hex"]
+
+[dependencies.faster-hex]
+version = "0.8.1"
+default-features = false
+optional = true
+
+
+
+[dev-dependencies]
+serde-json-core = { version = "0.5" }
