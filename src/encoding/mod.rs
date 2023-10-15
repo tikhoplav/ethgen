@@ -110,18 +110,76 @@ where
 }
 
 pub mod as_hex {
-    use super::{into_hex, Bytes};
+    //! Hex string serialization / deserialization
+    //!
+    //! The module contains `serialize` and `deserialize` functions and can be 
+    //! used with `serde` macros to enable data structure serialization / 
+    //! deserialization from JSON hex encoded string. Require a strucute to 
+    //! only implement `From<Bytes<N>>` and `Into<Bytes<N>>` traits. The byte 
+    //! representation of a struct for hex encoding (like RLP or ABI) should be 
+    //! picked corresponding to the role of a data struct in the JSON RPC call.
+    //!
+    //! ``` rust
+    //! use serde::{Serialize, Deserialize};
+    //! use ethgen::{Bytes, typenum::U4, as_hex};
+    //!
+    //! #[derive(Debug, PartialEq)]
+    //! struct Foo(u32);
+    //!
+    //! impl From<Bytes<U4>> for Foo {
+    //!     fn from(value: Bytes<U4>) -> Self {
+    //!         Self(u32::from_be_bytes(value.into()))
+    //!     }
+    //! }
+    //!
+    //! impl Into<Bytes<U4>> for &Foo {
+    //!     fn into(self) -> Bytes<U4> {
+    //!         Bytes::from_array(self.0.to_be_bytes())
+    //!     }
+    //! }
+    //!
+    //!
+    //!
+    //! #[derive(Debug, Serialize, Deserialize, PartialEq)]
+    //! struct Bar {
+    //!     #[serde(with = "as_hex")]
+    //!     foo: Foo
+    //! }
+    //!
+    //!
+    //!
+    //! let bar = Bar{ foo: Foo(262988610u32) };
+    //!
+    //! let mut buf = [0u8; 256];
+    //! let n = serde_json_core::to_slice(&bar, &mut buf).unwrap();
+    //! let json = unsafe { core::str::from_utf8_unchecked(&buf[..n]) };
+    //!
+    //!
+    //! let (result, _): (Bar, usize) = serde_json_core::from_str(json).unwrap();
+    //!
+    //!
+    //! assert_eq!(bar, result);
+    //! ```
+
+    use super::{into_hex, from_hex, Bytes};
     use generic_array::{
         typenum::{Prod, Sum, U2},
         ArrayLength,
     };
-    use serde::Serializer;
+    use serde::{Serializer, Deserializer};
+    use serde::de::{Visitor, Error};
+    use core::fmt;
+    use core::marker::PhantomData;
 
     /// Serialize a data struct into `0x` prefixed hex string.
     ///
+    /// Serialize a data struct as a JSON string containing `0x` prefixed
+    /// representation of data bytes. The length of the string and leading-zero
+    /// padding is determined by it's `Into<Bytes<N>>` trait implementation.
+    ///
     /// ``` rust
     /// use serde::Serialize;
-    /// use ethgen::{Bytes, as_hex, typenum::U4};
+    /// use ethgen::{Bytes, typenum::U4, as_hex};
     ///
     ///
     ///
@@ -169,6 +227,81 @@ pub mod as_hex {
         let s = unsafe { core::str::from_utf8_unchecked(&nybls) };
 
         serializer.serialize_str(s)
+    }
+
+    /// Deserialize a data struct from hex encoded string
+    ///
+    /// Deserialize a data struct from a JSON string containting hex encoded
+    /// byte representation of the string. Supports lower, upper and mixed case
+    /// hex strings. `0x` preffix is stripped automatically if presented.
+    ///
+    /// Before data structure is finalized it's decoded bytes are written into
+    /// a byte buffer, which length is determined by it's `From<Bytes<N>>`
+    /// implementation. All encodings are assumed to be Big Endian. In case if 
+    /// hex string exceeds expected length only the expected amount of bytes is 
+    /// taken from the least significant endm which makes it applicable only
+    /// for data structures with **predetermined** size.
+    ///
+    /// ```rust
+    /// use serde::Deserialize;
+    /// use ethgen::{Bytes, typenum::U4, as_hex};
+    ///
+    ///
+    ///
+    /// #[derive(Debug, PartialEq)]
+    /// struct Foo(u32);
+    ///
+    /// impl From<Bytes<U4>> for Foo {
+    ///     fn from(value: Bytes<U4>) -> Self {
+    ///         Self(u32::from_be_bytes(value.into()))
+    ///     }
+    /// }
+    ///
+    ///
+    ///
+    /// #[derive(Debug, Deserialize, PartialEq)]
+    /// struct Bar {
+    ///     #[serde(with = "as_hex")]
+    ///     foo: Foo,
+    /// }
+    ///
+    ///
+    ///
+    /// let json = r#"{"foo":"0x0face342"}"#;
+    ///
+    /// let (result, _): (Bar, usize) = serde_json_core::from_str(json).unwrap();
+    /// let expected = Bar{ foo: Foo(262988610u32) };
+    ///
+    /// assert_eq!(expected, result);
+    /// ```
+    pub fn deserialize<'de, D, T, N>(deserializer: D) -> Result<T, D::Error>
+    where
+        D: Deserializer<'de>,
+        N: ArrayLength,
+        T: From<Bytes<N>>,
+    {
+        struct HexVisitor<T, N>(PhantomData<T>, PhantomData<N>);
+
+        impl<'de, T, N> Visitor<'de> for HexVisitor<T, N>
+        where
+            N: ArrayLength,
+            T: From<Bytes<N>>,
+        {
+            type Value = T;
+
+            fn expecting(&self, f: &mut fmt::Formatter) -> fmt::Result {
+                write!(f, "hex encoded string")
+            }
+
+            fn visit_str<E>(self, v: &str) -> Result<Self::Value, E>
+            where
+                E: Error,
+            {
+                Ok(from_hex(&v))
+            }
+        }
+
+        deserializer.deserialize_str(HexVisitor(PhantomData, PhantomData))
     }
 }
 

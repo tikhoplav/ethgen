@@ -16,6 +16,10 @@ version = "1.0"
 default-features = false
 features = ["derive"]
 
+[dependencies.crypto-bigint]
+version = "0.5.3"
+default-features = false
+
 
 
 [features]
