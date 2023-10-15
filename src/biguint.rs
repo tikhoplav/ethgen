@@ -1,5 +1,5 @@
-use crypto_bigint::{Uint, CheckedAdd};
 use core::{fmt, ops::Add};
+use crypto_bigint::{CheckedAdd, Uint};
 
 /// BigUint
 ///
@@ -41,7 +41,6 @@ impl<const N: usize> Add for BigUint<N> {
             .into()
     }
 }
-
 
 /// uint256
 ///

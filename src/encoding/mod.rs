@@ -112,11 +112,11 @@ where
 pub mod as_hex {
     //! Hex string serialization / deserialization
     //!
-    //! The module contains `serialize` and `deserialize` functions and can be 
-    //! used with `serde` macros to enable data structure serialization / 
-    //! deserialization from JSON hex encoded string. Require a strucute to 
-    //! only implement `From<Bytes<N>>` and `Into<Bytes<N>>` traits. The byte 
-    //! representation of a struct for hex encoding (like RLP or ABI) should be 
+    //! The module contains `serialize` and `deserialize` functions and can be
+    //! used with `serde` macros to enable data structure serialization /
+    //! deserialization from JSON hex encoded string. Require a strucute to
+    //! only implement `From<Bytes<N>>` and `Into<Bytes<N>>` traits. The byte
+    //! representation of a struct for hex encoding (like RLP or ABI) should be
     //! picked corresponding to the role of a data struct in the JSON RPC call.
     //!
     //! ``` rust
@@ -161,15 +161,15 @@ pub mod as_hex {
     //! assert_eq!(bar, result);
     //! ```
 
-    use super::{into_hex, from_hex, Bytes};
+    use super::{from_hex, into_hex, Bytes};
+    use core::fmt;
+    use core::marker::PhantomData;
     use generic_array::{
         typenum::{Prod, Sum, U2},
         ArrayLength,
     };
-    use serde::{Serializer, Deserializer};
-    use serde::de::{Visitor, Error};
-    use core::fmt;
-    use core::marker::PhantomData;
+    use serde::de::{Error, Visitor};
+    use serde::{Deserializer, Serializer};
 
     /// Serialize a data struct into `0x` prefixed hex string.
     ///
@@ -237,8 +237,8 @@ pub mod as_hex {
     ///
     /// Before data structure is finalized it's decoded bytes are written into
     /// a byte buffer, which length is determined by it's `From<Bytes<N>>`
-    /// implementation. All encodings are assumed to be Big Endian. In case if 
-    /// hex string exceeds expected length only the expected amount of bytes is 
+    /// implementation. All encodings are assumed to be Big Endian. In case if
+    /// hex string exceeds expected length only the expected amount of bytes is
     /// taken from the least significant endm which makes it applicable only
     /// for data structures with **predetermined** size.
     ///

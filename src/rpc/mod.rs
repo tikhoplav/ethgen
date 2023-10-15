@@ -5,7 +5,7 @@
 //! based on the current Ethereum JSON RPC specifications:
 //! <https://ethereum.org/en/developers/docs/apis/json-rpc/>
 
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
 /// JSON RPC version
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -16,7 +16,7 @@ pub enum Version {
 
 mod error;
 #[doc(inline)]
-pub use error::{Error, Code, Message};
+pub use error::{Code, Error, Message};
 
 mod res;
 #[doc(inline)]
@@ -24,4 +24,4 @@ pub use res::Response;
 
 mod req;
 #[doc(inline)]
-pub use req::{Request, Method};
+pub use req::{Method, Request};

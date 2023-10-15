@@ -1,5 +1,5 @@
-use serde::{Serialize, Serializer, Deserialize, Deserializer};
 use core::{fmt, str};
+use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
 /// JSON RPC error code
 #[derive(Debug, Clone, PartialEq)]
@@ -66,7 +66,7 @@ impl<'a> Deserialize<'a> for Code {
 ///
 /// Due to `no_std` restrictions the message is presented as a byte array with
 /// constant size containing utf8 bytes of the error message. Currently **128**
-/// bytes is used to store the error message (this amount may be changed in 
+/// bytes is used to store the error message (this amount may be changed in
 /// further versions.
 #[derive(PartialEq, Clone)]
 pub struct Message([u8; 128], usize);
@@ -86,15 +86,13 @@ impl From<&str> for Message {
 impl<'a> Into<&'a str> for &'a Message {
     #[inline(always)]
     fn into(self) -> &'a str {
-        unsafe {
-            str::from_utf8_unchecked(&self.0[..self.1])
-        }
+        unsafe { str::from_utf8_unchecked(&self.0[..self.1]) }
     }
 }
 
 impl fmt::Debug for Message {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", <&Self as Into<&str>>::into(self) )
+        write!(f, "{}", <&Self as Into<&str>>::into(self))
     }
 }
 
@@ -125,7 +123,7 @@ impl<'a> Deserialize<'a> for Message {
 ///
 ///
 /// let err = Error::new(-32600i64, "Invalid request");
-/// 
+///
 /// let mut buf = [0u8; 64];
 /// let n = serde_json_core::to_slice(&err, &mut buf).unwrap();
 /// let json = core::str::from_utf8(&buf[..n]).unwrap();
@@ -134,9 +132,9 @@ impl<'a> Deserialize<'a> for Message {
 /// assert_eq!(expected, json);
 ///
 ///
-/// 
+///
 /// let json = r#"{"code":-32003,"message":"Call reverted: assertion failed"}"#;
-/// 
+///
 /// let (result, _) = serde_json_core::from_str::<Error>(json).unwrap();
 /// let expected = Error::new(-32003, "Call reverted: assertion failed");
 ///

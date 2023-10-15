@@ -1,12 +1,12 @@
-use serde::{Serialize, Deserialize};
-use super::{Error, Code, Version};
+use super::{Code, Error, Version};
+use serde::{Deserialize, Serialize};
 
 /// JSON RPC response
 ///
 /// ```rust
 /// use ethgen::rpc::{Response, Code};
 ///
-/// 
+///
 /// let json = r#"{
 ///     "jsonrpc": "2.0",
 ///     "error": {
@@ -17,7 +17,7 @@ use super::{Error, Code, Version};
 /// }"#;
 ///
 ///
-/// let (res, _): (Response<u64>, usize) = 
+/// let (res, _): (Response<u64>, usize) =
 ///     serde_json_core::from_str(json).unwrap();
 ///
 /// assert_eq!(res.error_code(), Some(Code::InvalidRequest));
@@ -51,7 +51,7 @@ use super::{Error, Code, Version};
 /// ]"#;
 ///
 /// let (res, _) = serde_json_core::from_str::<Batch>(json).unwrap();
-/// 
+///
 /// assert_eq!(res.0.error_code(), Some(Code::InvalidRequest));
 /// assert_eq!(res.1.unwrap(), 42);
 /// ```

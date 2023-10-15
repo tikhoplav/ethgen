@@ -13,6 +13,6 @@ pub use encoding::{as_hex, from_hex, hex, into_hex, Bytes};
 
 mod biguint;
 #[doc(inline)]
-pub use biguint::{BigUint, uint256, uint};
+pub use biguint::{uint, uint256, BigUint};
 
 pub mod rpc;
